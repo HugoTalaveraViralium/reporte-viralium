@@ -53,7 +53,7 @@ jobs:
         run: |
           git config user.name "Reporte Viralium"
           git config user.email "actions@github.com"
-          git add data.json historico/
+          git add data.json historico/ ventana-episodios.json
           git commit -m "Reporte $(date +%d/%m/%Y)" || exit 0
           git push
 
