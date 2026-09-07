@@ -2,7 +2,8 @@ name: Reporte semanal Viralium
 
 on:
   schedule:
-    - cron: '0 6 * * 1'      # lunes 08:00 en España (06:00 UTC)
+    - cron: '0 7 * * 1'      # lunes 09:00 en España (horario de verano)
+    - cron: '0 8 * * 1'      # lunes 09:00 en España (horario de invierno)
   workflow_dispatch:          # botón para lanzarlo a mano
 
 permissions:
@@ -12,24 +13,43 @@ jobs:
   generar:
     runs-on: ubuntu-latest
     steps:
+      - name: Comprobar que en España son las 9
+        id: hora
+        run: |
+          H=$(TZ=Europe/Madrid date +%H)
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$H" != "09" ]; then
+            echo "En Madrid son las $H, no toca. Se salta."
+            echo "seguir=no" >> $GITHUB_OUTPUT
+          else
+            echo "seguir=si" >> $GITHUB_OUTPUT
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.hora.outputs.seguir == 'si'
 
       - uses: actions/setup-node@v4
+        if: steps.hora.outputs.seguir == 'si'
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Generar data.json
+        if: steps.hora.outputs.seguir == 'si'
         env:
           SHEET_CSV_URL: ${{ secrets.SHEET_CSV_URL }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
         run: node build.mjs
 
       - name: Guardar copia de la semana
+        if: steps.hora.outputs.seguir == 'si'
         run: |
           mkdir -p historico
           cp data.json "historico/$(date +%Y-%m-%d).json"
 
       - name: Publicar
+        if: steps.hora.outputs.seguir == 'si'
         run: |
           git config user.name "Reporte Viralium"
           git config user.email "actions@github.com"
@@ -38,10 +58,10 @@ jobs:
           git push
 
       - name: Avisar por Telegram
+        if: steps.hora.outputs.seguir == 'si'
         continue-on-error: true
         run: |
           curl -s -X POST \
             "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -d disable_web_page_preview=false \
             -d text="Reporte semanal de Viralium listo: https://${{ secrets.DOMINIO }}"
