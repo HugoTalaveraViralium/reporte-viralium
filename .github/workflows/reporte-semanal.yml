@@ -1,0 +1,46 @@
+name: Reporte semanal Viralium
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'      # lunes 08:00 en España (06:00 UTC)
+  workflow_dispatch:          # botón para lanzarlo a mano cuando quieras
+
+permissions:
+  contents: write
+
+jobs:
+  generar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generar data.json
+        env:
+          SHEET_CSV_URL: ${{ secrets.SHEET_CSV_URL }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: node build.mjs
+
+      - name: Guardar copia de la semana
+        run: |
+          mkdir -p historico
+          cp data.json "historico/$(date +%Y-%m-%d).json"
+
+      - name: Publicar
+        run: |
+          git config user.name "Reporte Viralium"
+          git config user.email "actions@github.com"
+          git add data.json historico/
+          git commit -m "Reporte $(date +%d/%m/%Y)" || exit 0
+          git push
+
+      - name: Avisar por WhatsApp
+        run: |
+          MSG="Reporte semanal de Viralium listo: https://${{ secrets.DOMINIO }}"
+          curl -s -G "https://api.callmebot.com/whatsapp.php" \
+            --data-urlencode "phone=${{ secrets.WHATSAPP_TELEFONO }}" \
+            --data-urlencode "text=$MSG" \
+            --data-urlencode "apikey=${{ secrets.CALLMEBOT_APIKEY }}"
