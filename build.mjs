@@ -7,12 +7,18 @@ const CONFIG = {
   playlistId: 'PLNkJvjSA8IT9JD5JmzXvJHVA1ewML_DUC',
   duracionMinimaMin: 20,      // por debajo de esto no es episodio, es clip
   episodiosReferencia: 20,    // cuántos episodios pasados entran en la mediana
+  diasVentana: 4,             // jueves a domingo: los días que se comparan de cada episodio
   comentariosMostrados: 8,
   zona: 'Europe/Madrid'
 };
 
 const SHEET_CSV = process.env.SHEET_CSV_URL;   // Sheet de Sort Feed publicado como CSV
 const YT_KEY    = process.env.YOUTUBE_API_KEY;
+const OAUTH = {                                 // opcional: activa la comparación por ventana
+  id: process.env.YT_CLIENT_ID,
+  secret: process.env.YT_CLIENT_SECRET,
+  refresh: process.env.YT_REFRESH_TOKEN
+};
 
 // ---------------------------------------------------------------- utilidades
 
@@ -22,6 +28,38 @@ const yt = async (endpoint, params) => {
   if (!r.ok) throw new Error(`YouTube ${endpoint}: ${r.status} ${await r.text()}`);
   return r.json();
 };
+
+// Analytics necesita permiso del canal. Sin él, el script sigue con vistas totales.
+let accessToken = null;
+async function autenticar() {
+  if (!OAUTH.id || !OAUTH.secret || !OAUTH.refresh) return null;
+  const r = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: OAUTH.id, client_secret: OAUTH.secret,
+      refresh_token: OAUTH.refresh, grant_type: 'refresh_token'
+    })
+  });
+  if (!r.ok) { console.warn('Analytics no disponible:', await r.text()); return null; }
+  return (await r.json()).access_token;
+}
+
+// Vistas de un vídeo durante sus primeros días de vida
+async function vistasVentana(videoId, publicado) {
+  const desde = publicado.slice(0, 10);
+  const hasta = new Date(new Date(desde).getTime() + (CONFIG.diasVentana - 1) * 864e5)
+                  .toISOString().slice(0, 10);
+  const q = new URLSearchParams({
+    ids: 'channel==MINE', startDate: desde, endDate: hasta,
+    metrics: 'views', filters: `video==${videoId}`
+  });
+  const r = await fetch(`https://youtubeanalytics.googleapis.com/v2/reports?${q}`,
+                        { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!r.ok) return null;
+  const j = await r.json();
+  return j.rows?.[0]?.[0] ?? 0;
+}
 
 const chunk = (arr, n) => arr.reduce((a, _, i) => (i % n ? a : [...a, arr.slice(i, i + n)]), []);
 
@@ -143,7 +181,23 @@ async function youtube() {
 
   const ultimo = episodios[0];
   const previos = episodios.slice(1, 1 + CONFIG.episodiosReferencia);
-  const vistasPrevias = previos.map(e => e.vistas);
+
+  // El episodio nuevo lleva publicado desde el jueves, así que sus vistas totales
+  // SON las de la ventana. De los antiguos hay que pedir solo sus primeros días.
+  accessToken = await autenticar();
+  let vistasPrevias, criterio;
+  if (accessToken) {
+    vistasPrevias = [];
+    for (const e of previos) {
+      const v = await vistasVentana(e.videoId, e.publicado);
+      if (v !== null && v > 0) vistasPrevias.push(v);
+    }
+    criterio = `primeros ${CONFIG.diasVentana} días de cada episodio`;
+  }
+  if (!vistasPrevias || vistasPrevias.length < 3) {
+    vistasPrevias = previos.map(e => e.vistas);
+    criterio = 'vistas totales acumuladas (sin acceso a Analytics)';
+  }
 
   // 4. comentarios con texto
   let comentarios = [];
@@ -178,7 +232,8 @@ async function youtube() {
       mediana: mediana(vistasPrevias),
       maximo: Math.max(...vistasPrevias, ultimo.vistas),
       episodios: episodios.length,
-      criterio: 'vistas totales de los últimos ' + previos.length + ' episodios largos'
+      comparados: vistasPrevias.length,
+      criterio
     },
     comentarios
   };
