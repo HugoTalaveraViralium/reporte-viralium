@@ -65,14 +65,13 @@ function parseCSV(texto) {
 // AJUSTAR AQUÍ cuando sepamos los nombres exactos de columna de tu exportación.
 // Cada entrada busca la primera columna que exista de la lista.
 const COLUMNAS = {
-  url:         ['url', 'link', 'permalink', 'post url'],
-  fecha:       ['date', 'fecha', 'timestamp', 'posted', 'created'],
-  titulo:      ['caption', 'description', 'texto', 'title'],
-  vistas:      ['views', 'plays', 'reproducciones', 'view count'],
-  likes:       ['likes', 'like count', 'me gusta'],
-  comentarios: ['comments', 'comment count', 'comentarios'],
-  guardados:   ['saves', 'saved', 'guardados'],
-  compartidos: ['shares', 'shared', 'compartidos']
+  url:         ['reel', 'url', 'link', 'permalink'],
+  fecha:       ['create date', 'date', 'fecha', 'timestamp'],
+  titulo:      ['titulo', 'título', 'caption', 'description'],   // opcional
+  vistas:      ['views', 'plays', 'reproducciones'],
+  likes:       ['likes', 'me gusta'],
+  comentarios: ['comments', 'comentarios'],
+  outlier:     ['outlier score', 'outlier']
 };
 
 const campo = (fila, claves) => {
@@ -86,6 +85,7 @@ async function instagram(desde, hasta) {
   const csv = await fetch(SHEET_CSV).then(r => r.text());
   const reels = parseCSV(csv).map(f => {
     const fecha = new Date(campo(f, COLUMNAS.fecha));
+    if (isNaN(fecha)) return null;
     return {
       fecha: fecha.toISOString().slice(0, 10),
       dia: diaSemana(fecha),
@@ -94,10 +94,10 @@ async function instagram(desde, hasta) {
       vistas: aNumero(campo(f, COLUMNAS.vistas)),
       likes: aNumero(campo(f, COLUMNAS.likes)),
       comentarios: aNumero(campo(f, COLUMNAS.comentarios)),
-      guardados: aNumero(campo(f, COLUMNAS.guardados)),
-      compartidos: aNumero(campo(f, COLUMNAS.compartidos))
+      outlier: aNumero(campo(f, COLUMNAS.outlier))
     };
   })
+  .filter(Boolean)
   .filter(r => r.shortcode && r.fecha >= desde && r.fecha <= hasta)
   .sort((a, b) => b.vistas - a.vistas);
 

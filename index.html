@@ -227,7 +227,7 @@ footer a{color:var(--gold-light)}
 
 <section class="section">
   <div class="section-head">
-    <h2>Los siete reels de la semana</h2>
+    <h2 id="igTitulo"></h2>
     <div class="meta" id="igMeta"></div>
   </div>
   <div class="rule"></div>
@@ -334,6 +334,7 @@ function facade(stage, {caption, hint, src}){
 }
 
 /* --- Instagram --- */
+const etiqueta = r => r.titulo || `Reel del ${r.dia} ${+r.fecha.slice(8)}/${+r.fecha.slice(5,7)}`;
 const reels = [...DATA.instagram.reels].sort((a,b) => b.vistas - a.vistas);
 const top = reels[0];
 const totalIG = reels.reduce((s,r) => s + r.vistas, 0);
@@ -341,26 +342,28 @@ const mediaIG = Math.round(totalIG / reels.length);
 
 $('issueDates').textContent = DATA.semana.etiqueta;
 $('lede-h').textContent = 'Una semana con un reel que se sale de la línea y un episodio por encima de la media.';
-$('lede-p').textContent = `Siete reels publicados en @${DATA.instagram.cuenta} y un episodio largo en ${DATA.youtube.canal}. Toca cualquier reel para verlo aquí mismo.`;
+$('lede-p').textContent = `${reels.length} reels publicados en @${DATA.instagram.cuenta} y un episodio largo en ${DATA.youtube.canal}. Toca cualquier reel para verlo aquí mismo.`;
+$('igTitulo').textContent = `Los ${reels.length} reels de la semana`;
 $('igMeta').textContent = `${fmt(totalIG)} reproducciones en total · media de ${fmt(mediaIG)} por reel`;
 
 function loadReel(r){
   facade($('reelStage'), {
-    caption: r.titulo,
+    caption: etiqueta(r),
     hint: `${r.dia} · ${fmt(r.vistas)} reproducciones`,
     src: `https://www.instagram.com/reel/${r.shortcode}/embed/captioned/`
   });
   $('champLabel').textContent = r === top ? 'Ganador de la semana' : `Publicado el ${r.dia}`;
   $('champViews').textContent = fmt(r.vistas);
-  $('champCaption').textContent = r.titulo;
+  $('champCaption').textContent = etiqueta(r);
   const x = (r.vistas / mediaIG);
   $('champPills').innerHTML = [
-    `<span class="pill"><b>${x.toFixed(1).replace('.',',')}×</b> la media semanal</span>`,
+    `<span class="pill"><b>${x.toFixed(1).replace('.',',')}×</b> la media de la semana</span>`,
+    r.outlier ? `<span class="pill"><b>${String(r.outlier).replace('.',',')}×</b> lo normal de la cuenta</span>` : '',
     `<span class="pill">${fmt(r.likes)} me gusta</span>`,
-    `<span class="pill">${fmt(r.guardados)} guardados</span>`,
-    `<span class="pill">${fmt(r.compartidos)} compartidos</span>`,
+    r.guardados ? `<span class="pill">${fmt(r.guardados)} guardados</span>` : '',
+    r.compartidos ? `<span class="pill">${fmt(r.compartidos)} compartidos</span>` : '',
     `<span class="pill">${fmt(r.comentarios)} comentarios</span>`
-  ].join('');
+  ].filter(Boolean).join('');
   document.querySelectorAll('.rung').forEach(el =>
     el.setAttribute('aria-current', el.dataset.code === r.shortcode ? 'true' : 'false'));
 }
@@ -369,7 +372,7 @@ $('ladder').innerHTML = reels.map((r,i) => `
   <button class="rung ${i===0?'is-top':''}" data-code="${r.shortcode}" aria-current="${i===0}">
     <span class="bar" style="width:${Math.max(9, r.vistas/top.vistas*100)}%"></span>
     <span class="pos">${i+1}</span>
-    <span class="title">${r.titulo}<span class="day">${r.dia} ${r.fecha.slice(8)}/${r.fecha.slice(5,7)}</span></span>
+    <span class="title">${etiqueta(r)}<span class="day">${r.dia} ${r.fecha.slice(8)}/${r.fecha.slice(5,7)}</span></span>
     <span class="num">${kfmt(r.vistas)}<span class="sub">${fmt(r.likes)} me gusta</span></span>
   </button>`).join('');
 document.querySelectorAll('.rung').forEach(el =>
