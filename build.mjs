@@ -58,7 +58,7 @@ async function autenticar() {
 // Se prueban las dos formas de identificar el canal: la cuenta propia y el id directo,
 // porque siendo editor de una cuenta de marca "MINE" no siempre resuelve.
 let idsCanal = null;
-const FORMAS = ['channel==MINE', `channel==${CONFIG.channelId}`];
+const FORMAS = [`channel==${CONFIG.channelId}`, 'channel==MINE'];
 
 async function pedirVentana(ids, videoId, publicado) {
   const desde = publicado.slice(0, 10);
@@ -81,13 +81,17 @@ async function vistasVentana(videoId, publicado) {
     if (res.error) { DIAG.push('consulta: ' + res.error); return null; }
     return res.vistas;
   }
-  for (const forma of FORMAS) {          // primera llamada: averiguar cuál funciona
+  // Se prueba cada forma y solo vale la que además DEVUELVE datos.
+  // "MINE" puede contestar sin error y con cero filas si apunta a otro canal.
+  for (const forma of FORMAS) {
     const res = await pedirVentana(forma, videoId, publicado);
     if (res.error) { DIAG.push(`${forma} -> ${res.error}`); continue; }
+    if (!res.vistas) { DIAG.push(`${forma} -> responde pero sin datos`); continue; }
     idsCanal = forma;
     DIAG.push(`funciona con ${forma}`);
     return res.vistas;
   }
+  DIAG.push('ninguna forma devuelve datos: la cuenta autorizada no es la del canal');
   return null;
 }
 
