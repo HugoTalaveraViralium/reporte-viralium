@@ -1,0 +1,113 @@
+{
+  "semana": {
+    "etiqueta": "31 de agosto – 6 de septiembre de 2026",
+    "generado": "lunes, 7 sept, 13:09"
+  },
+  "instagram": {
+    "cuenta": "xavierlopezvega",
+    "reels": [
+      {
+        "fecha": "2026-09-03",
+        "dia": "jueves",
+        "shortcode": "Dc1NDTpjcYh",
+        "titulo": "",
+        "vistas": 17057,
+        "likes": 123,
+        "comentarios": 0,
+        "outlier": 2.66
+      },
+      {
+        "fecha": "2026-09-01",
+        "dia": "martes",
+        "shortcode": "DcvZ3LWAGtD",
+        "titulo": "",
+        "vistas": 4257,
+        "likes": 65,
+        "comentarios": 3,
+        "outlier": 0.66
+      },
+      {
+        "fecha": "2026-09-06",
+        "dia": "domingo",
+        "shortcode": "Dc8RyCkCH8b",
+        "titulo": "",
+        "vistas": 4222,
+        "likes": 55,
+        "comentarios": 3,
+        "outlier": 0.66
+      },
+      {
+        "fecha": "2026-09-04",
+        "dia": "viernes",
+        "shortcode": "Dc3IUUBFJC5",
+        "titulo": "",
+        "vistas": 4094,
+        "likes": 36,
+        "comentarios": 0,
+        "outlier": 0.64
+      },
+      {
+        "fecha": "2026-09-05",
+        "dia": "sábado",
+        "shortcode": "Dc5tB4GnVpr",
+        "titulo": "",
+        "vistas": 2958,
+        "likes": 47,
+        "comentarios": 1,
+        "outlier": 0.46
+      }
+    ]
+  },
+  "youtube": {
+    "canal": "Cuéntanos Tu Éxito",
+    "episodio": {
+      "videoId": "w8TXQAOjY9k",
+      "titulo": "Experta en Licitaciones: Superó un cáncer y Hoy le Vende Millones al Estado (Montse Cruxens)",
+      "publicado": "2026-09-03",
+      "vistas": 13472,
+      "likes": 47,
+      "comentarios": 7,
+      "duracion": "2h 28min",
+      "dias": 4
+    },
+    "referencia": {
+      "media": 45595,
+      "mediana": 48298,
+      "maximo": 80786,
+      "episodios": 119,
+      "criterio": "vistas totales de los últimos 20 episodios largos"
+    },
+    "comentarios": [
+      {
+        "autor": "@JavierLopez-tx2vn",
+        "cuando": "3 sept",
+        "texto": "Buen Podcats!!",
+        "likes": 0
+      },
+      {
+        "autor": "@lireetavancer4071",
+        "cuando": "3 sept",
+        "texto": "Nada que ver con el Podcast de hoy, pero tenéis alguna idea aproximativa de cuando Areajuridicaglobal saldrá a bolsa?",
+        "likes": 0
+      },
+      {
+        "autor": "@joyanimal_com",
+        "cuando": "6 sept",
+        "texto": "Pero ojo, que luego en todos los ayuntamientos los importes menores los decide el alcalde, supuestamente a dedo jajaja",
+        "likes": 0
+      },
+      {
+        "autor": "@franciscojaviercordoba5191",
+        "cuando": "3 sept",
+        "texto": "3:46 momento en el que te das cuenta de qur Javier es un cuñao",
+        "likes": 1
+      },
+      {
+        "autor": "@adriantoledo1989",
+        "cuando": "4 sept",
+        "texto": "Un poco pedante la invitada.",
+        "likes": 0
+      }
+    ]
+  }
+}
