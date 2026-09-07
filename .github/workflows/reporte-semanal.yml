@@ -3,7 +3,7 @@ name: Reporte semanal Viralium
 on:
   schedule:
     - cron: '0 6 * * 1'      # lunes 08:00 en España (06:00 UTC)
-  workflow_dispatch:          # botón para lanzarlo a mano cuando quieras
+  workflow_dispatch:          # botón para lanzarlo a mano
 
 permissions:
   contents: write
@@ -37,10 +37,11 @@ jobs:
           git commit -m "Reporte $(date +%d/%m/%Y)" || exit 0
           git push
 
-      - name: Avisar por WhatsApp
+      - name: Avisar por Telegram
+        continue-on-error: true
         run: |
-          MSG="Reporte semanal de Viralium listo: https://${{ secrets.DOMINIO }}"
-          curl -s -G "https://api.callmebot.com/whatsapp.php" \
-            --data-urlencode "phone=${{ secrets.WHATSAPP_TELEFONO }}" \
-            --data-urlencode "text=$MSG" \
-            --data-urlencode "apikey=${{ secrets.CALLMEBOT_APIKEY }}"
+          curl -s -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d disable_web_page_preview=false \
+            -d text="Reporte semanal de Viralium listo: https://${{ secrets.DOMINIO }}"
