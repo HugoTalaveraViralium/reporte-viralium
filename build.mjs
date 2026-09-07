@@ -7,6 +7,7 @@ const CONFIG = {
   cuentaInstagram: 'xavierlopezvega',
   canalYouTube: 'Cuéntanos Tu Éxito',
   playlistId: 'PLNkJvjSA8IT9JD5JmzXvJHVA1ewML_DUC',
+  channelId: 'UC-7mUE-O8r56RECogLXE8kg',
   duracionMinimaMin: 20,      // por debajo de esto no es episodio, es clip
   episodiosReferencia: 20,    // cuántos episodios pasados entran en la mediana
   diasVentana: 4,             // jueves a domingo: los días que se comparan de cada episodio
@@ -44,24 +45,46 @@ async function autenticar() {
       refresh_token: OAUTH.refresh, grant_type: 'refresh_token'
     })
   });
-  if (!r.ok) { console.warn('Analytics no disponible:', await r.text()); return null; }
+  if (!r.ok) { console.warn('No se pudo renovar el permiso:', (await r.text()).slice(0, 240)); return null; }
+  console.log('Permiso de Analytics obtenido.');
   return (await r.json()).access_token;
 }
 
-// Vistas de un vídeo durante sus primeros días de vida
-async function vistasVentana(videoId, publicado) {
+// Vistas de un vídeo durante sus primeros días de vida.
+// Se prueban las dos formas de identificar el canal: la cuenta propia y el id directo,
+// porque siendo editor de una cuenta de marca "MINE" no siempre resuelve.
+let idsCanal = null;
+const FORMAS = ['channel==MINE', `channel==${CONFIG.channelId}`];
+
+async function pedirVentana(ids, videoId, publicado) {
   const desde = publicado.slice(0, 10);
   const hasta = new Date(new Date(desde).getTime() + (CONFIG.diasVentana - 1) * 864e5)
                   .toISOString().slice(0, 10);
   const q = new URLSearchParams({
-    ids: 'channel==MINE', startDate: desde, endDate: hasta,
+    ids, startDate: desde, endDate: hasta,
     metrics: 'views', filters: `video==${videoId}`
   });
   const r = await fetch(`https://youtubeanalytics.googleapis.com/v2/reports?${q}`,
                         { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!r.ok) return null;
-  const j = await r.json();
-  return j.rows?.[0]?.[0] ?? 0;
+  const cuerpo = await r.text();
+  if (!r.ok) return { error: `${r.status} ${cuerpo.slice(0, 240)}` };
+  return { vistas: JSON.parse(cuerpo).rows?.[0]?.[0] ?? 0 };
+}
+
+async function vistasVentana(videoId, publicado) {
+  if (idsCanal) {
+    const res = await pedirVentana(idsCanal, videoId, publicado);
+    if (res.error) { console.warn('Analytics:', res.error); return null; }
+    return res.vistas;
+  }
+  for (const forma of FORMAS) {          // primera llamada: averiguar cuál funciona
+    const res = await pedirVentana(forma, videoId, publicado);
+    if (res.error) { console.warn(`Analytics con ${forma}: ${res.error}`); continue; }
+    idsCanal = forma;
+    console.log(`Analytics responde usando ${forma}`);
+    return res.vistas;
+  }
+  return null;
 }
 
 const chunk = (arr, n) => arr.reduce((a, _, i) => (i % n ? a : [...a, arr.slice(i, i + n)]), []);
@@ -201,10 +224,14 @@ async function youtube() {
     accessToken = await autenticar();
     if (accessToken) {
       console.log(`Rellenando ${faltan.length} episodios desde Analytics…`);
+      let fallos = 0;
       for (const e of faltan) {
         const v = await vistasVentana(e.videoId, e.publicado);
-        if (v !== null && v > 0) ventana[e.videoId] = v;
+        if (v === null) { if (++fallos >= 3) { console.warn('Analytics falla, se deja.'); break; } }
+        else if (v > 0) ventana[e.videoId] = v;
+        else console.warn(`Sin datos para ${e.videoId} (${e.publicado.slice(0,10)})`);
       }
+      console.log(`Archivados ${Object.keys(ventana).length} episodios con ventana.`);
     }
   }
 

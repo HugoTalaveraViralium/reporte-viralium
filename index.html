@@ -171,8 +171,6 @@ body::after{
 .cmt p{margin:5px 0 0;color:var(--ink-soft);font-size:14.5px}
 .cmt .likes{font-size:12px;color:var(--ink-faint);margin-top:6px}
 
-footer{margin-top:80px;padding-top:22px;border-top:1px solid var(--navy-line);color:var(--ink-faint);font-size:13px}
-footer a{color:var(--gold-light)}
 
 @media (max-width:900px){
   .wrap{padding:0 16px 64px}
@@ -269,9 +267,6 @@ footer a{color:var(--gold-light)}
   </div>
 </section>
 
-<footer>
-  <p id="footNote"></p>
-</footer>
 </div>
 
 <script type="module">
@@ -424,9 +419,7 @@ $('cmtList').innerHTML = cmts.map(c => `
     <div class="likes">${c.likes} me gusta</div>
   </div>`).join('');
 
-$('footNote').textContent = `Generado automáticamente el ${DATA.semana.generado}. `
-  + `El episodio se compara contra los ${ref.comparados || 0} anteriores usando ${ref.criterio}. `
-  + `YouTube solo da datos por día completo, así que la ventana va del día de publicación al domingo. Viralium.`;
+
 </script>
 </body>
 </html>
