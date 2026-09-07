@@ -1,7 +1,7 @@
 {
   "semana": {
     "etiqueta": "31 de agosto – 6 de septiembre de 2026",
-    "generado": "lunes, 7 sept, 16:50"
+    "generado": "lunes, 7 sept, 16:56"
   },
   "instagram": {
     "cuenta": "xavierlopezvega",
@@ -64,7 +64,7 @@
       "videoId": "w8TXQAOjY9k",
       "titulo": "Experta en Licitaciones: Superó un cáncer y Hoy le Vende Millones al Estado (Montse Cruxens)",
       "publicado": "2026-09-03",
-      "vistas": 14032,
+      "vistas": 14040,
       "likes": 48,
       "comentarios": 7,
       "duracion": "2h 28min",
@@ -79,13 +79,13 @@
       "criterio": "vistas totales acumuladas (histórico aún sin construir)",
       "diagnostico": [
         "token: ok",
-        "funciona con channel==MINE",
-        "sin datos: cYwH2F7VAeA 2026-08-27",
-        "sin datos: -Zeo8yfUnHg 2026-08-20",
-        "sin datos: Me4cfTTuBkw 2026-08-13",
-        "sin datos: dr4FXDKHuy4 2026-08-06",
-        "sin datos: XA7oDz3vBnM 2026-07-30",
-        "sin datos: EtczE_x3dcA 2026-07-23"
+        "channel==UC-7mUE-O8r56RECogLXE8kg -> 403 {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Forbidden\",\n    \"errors\": [\n      {\n        \"message\": \"Forbidden\",\n        \"domain\": \"global\",\n        \"reason\": \"forbidden\"\n      }\n    ]\n  }\n}\n",
+        "channel==MINE -> responde pero sin datos",
+        "ninguna forma devuelve datos: la cuenta autorizada no es la del canal",
+        "channel==UC-7mUE-O8r56RECogLXE8kg -> 403 {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Forbidden\",\n    \"errors\": [\n      {\n        \"message\": \"Forbidden\",\n        \"domain\": \"global\",\n        \"reason\": \"forbidden\"\n      }\n    ]\n  }\n}\n",
+        "channel==MINE -> responde pero sin datos",
+        "ninguna forma devuelve datos: la cuenta autorizada no es la del canal",
+        "channel==UC-7mUE-O8r56RECogLXE8kg -> 403 {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Forbidden\",\n    \"errors\": [\n      {\n        \"message\": \"Forbidden\",\n        \"domain\": \"global\",\n        \"reason\": \"forbidden\"\n      }\n    ]\n  }\n}\n"
       ]
     },
     "comentarios": [
