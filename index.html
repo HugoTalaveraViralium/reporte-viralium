@@ -137,19 +137,8 @@ body::after{
   border-radius:16px;padding:22px;border:1px solid var(--navy-line);
   background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.015));
 }
-.verdict .tag{
-  display:inline-block;border-radius:999px;padding:5px 13px;font-size:12.5px;font-weight:600;
-  background:rgba(127,209,166,.16);color:var(--good);border:1px solid rgba(127,209,166,.35);
-}
-.verdict .tag.flat{background:rgba(255,255,255,.07);color:var(--ink-soft);border-color:var(--navy-line)}
-.verdict .tag.down{background:rgba(232,146,124,.14);color:var(--bad);border-color:rgba(232,146,124,.35)}
-.verdict .headline{font-family:var(--serif);font-size:38px;line-height:1;margin:16px 0 4px;color:var(--gold-light)}
-.verdict .vs{color:var(--ink-soft);font-size:14px;margin:0 0 18px}
-.gauge{height:8px;border-radius:99px;background:rgba(255,255,255,.09);position:relative;overflow:hidden;margin-bottom:8px}
-.gauge span{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--gold-dim),var(--gold-light));border-radius:99px}
-.gauge i{position:absolute;top:-4px;width:2px;height:16px;background:var(--ink);opacity:.75}
-.gaugekey{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-faint)}
-.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--navy-line);border-radius:14px;overflow:hidden;margin-top:22px}
+.verdict .epLabel{font-size:13px;color:var(--gold-light);margin-bottom:16px}
+.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--navy-line);border-radius:14px;overflow:hidden}
 .statgrid div{background:var(--navy);padding:16px 18px}
 .statgrid .n{font-family:var(--serif);font-size:26px;color:var(--ink)}
 .statgrid .l{font-size:12.5px;color:var(--ink-faint)}
@@ -257,11 +246,7 @@ body::after{
       </details>
     </div>
     <div class="verdict">
-      <span class="tag" id="verdictTag"></span>
-      <div class="headline" id="verdictNum"></div>
-      <p class="vs" id="verdictVs"></p>
-      <div class="gauge"><span id="gaugeFill"></span><i id="gaugeMark"></i></div>
-      <div class="gaugekey"><span>0</span><span id="gaugeAvg"></span><span id="gaugeMax"></span></div>
+      <div class="epLabel">El episodio de esta semana</div>
       <div class="statgrid" id="podStats"></div>
     </div>
   </div>
@@ -340,7 +325,7 @@ const totalIG = reels.reduce((s,r) => s + r.vistas, 0);
 const mediaIG = Math.round(totalIG / reels.length);
 
 $('issueDates').textContent = DATA.semana.etiqueta;
-$('lede-h').textContent = 'Una semana con un reel que se sale de la línea y un episodio por encima de la media.';
+$('lede-h').textContent = `El reel de la semana se fue a ${fmt(top.vistas)} reproducciones.`;
 $('lede-p').textContent = `${reels.length} reels publicados en @${DATA.instagram.cuenta} y un episodio largo en ${DATA.youtube.canal}. Toca cualquier reel para verlo aquí mismo.`;
 $('igTitulo').textContent = `Los ${reels.length} reels de la semana`;
 $('igMeta').textContent = `${fmt(totalIG)} reproducciones en total · media de ${fmt(mediaIG)} por reel`;
@@ -381,32 +366,20 @@ document.querySelectorAll('.rung').forEach(el =>
 loadReel(top);
 
 /* --- YouTube --- */
-const ep = DATA.youtube.episodio, ref = DATA.youtube.referencia;
+const ep = DATA.youtube.episodio;
 reproductor($('ytStage'), {
   titulo: ep.titulo,
   src: `https://www.youtube-nocookie.com/embed/${ep.videoId}`
 });
-$('ytMeta').textContent = `${ref.episodios} episodios largos en el histórico · se compara por ${ref.criterio}`;
+$('ytMeta').textContent = `${DATA.youtube.canal} · ${ep.duracion}`;
 $('epTitle').textContent = ep.titulo;
 $('epDate').textContent = `Publicado el ${new Date(ep.publicado).toLocaleDateString('es-ES',{day:'numeric',month:'long'})} · ${ep.duracion}`;
 
-const ratio = ep.vistas / ref.mediana;
-const pct = Math.round((ratio - 1) * 100);
-const tag = $('verdictTag');
-if (ratio >= 1.5)      { tag.textContent = 'Outlier positivo'; }
-else if (ratio >= 0.8) { tag.textContent = 'En su línea'; tag.className = 'tag flat'; }
-else                   { tag.textContent = 'Por debajo'; tag.className = 'tag down'; }
-$('verdictNum').textContent = (pct >= 0 ? '+' : '') + pct + '%';
-$('verdictVs').textContent = `sobre la mediana de los episodios anteriores en su misma ventana de días (${fmt(ref.mediana)} vistas). Clips y shorts quedan fuera.`;
-$('gaugeFill').style.width = Math.min(100, ep.vistas / ref.maximo * 100) + '%';
-$('gaugeMark').style.left = (ref.mediana / ref.maximo * 100) + '%';
-$('gaugeAvg').textContent = 'mediana ' + kfmt(ref.mediana);
-$('gaugeMax').textContent = 'récord ' + kfmt(ref.maximo);
 $('podStats').innerHTML = [
   [fmt(ep.vistas), 'vistas'],
   [fmt(ep.comentarios), 'comentarios'],
   [fmt(ep.likes), 'me gusta'],
-  [ratio.toFixed(2).replace('.',',') + '×', 'frente a la mediana']
+  [`${ep.dias} d`, 'desde que salió']
 ].map(([n,l]) => `<div><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
 
 const cmts = DATA.youtube.comentarios || [];
