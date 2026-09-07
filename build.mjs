@@ -35,8 +35,12 @@ const yt = async (endpoint, params) => {
 
 // Analytics necesita permiso del canal. Sin él, el script sigue con vistas totales.
 let accessToken = null;
+const DIAG = [];   // se vuelca en data.json para poder leerlo desde el navegador
 async function autenticar() {
-  if (!OAUTH.id || !OAUTH.secret || !OAUTH.refresh) return null;
+  if (!OAUTH.id || !OAUTH.secret || !OAUTH.refresh) {
+    DIAG.push(`faltan secrets: id=${!!OAUTH.id} secret=${!!OAUTH.secret} refresh=${!!OAUTH.refresh}`);
+    return null;
+  }
   const r = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -45,8 +49,8 @@ async function autenticar() {
       refresh_token: OAUTH.refresh, grant_type: 'refresh_token'
     })
   });
-  if (!r.ok) { console.warn('No se pudo renovar el permiso:', (await r.text()).slice(0, 240)); return null; }
-  console.log('Permiso de Analytics obtenido.');
+  if (!r.ok) { const t = (await r.text()).slice(0, 300); DIAG.push('token: ' + t); console.warn(t); return null; }
+  DIAG.push('token: ok');
   return (await r.json()).access_token;
 }
 
@@ -74,14 +78,14 @@ async function pedirVentana(ids, videoId, publicado) {
 async function vistasVentana(videoId, publicado) {
   if (idsCanal) {
     const res = await pedirVentana(idsCanal, videoId, publicado);
-    if (res.error) { console.warn('Analytics:', res.error); return null; }
+    if (res.error) { DIAG.push('consulta: ' + res.error); return null; }
     return res.vistas;
   }
   for (const forma of FORMAS) {          // primera llamada: averiguar cuál funciona
     const res = await pedirVentana(forma, videoId, publicado);
-    if (res.error) { console.warn(`Analytics con ${forma}: ${res.error}`); continue; }
+    if (res.error) { DIAG.push(`${forma} -> ${res.error}`); continue; }
     idsCanal = forma;
-    console.log(`Analytics responde usando ${forma}`);
+    DIAG.push(`funciona con ${forma}`);
     return res.vistas;
   }
   return null;
@@ -229,7 +233,7 @@ async function youtube() {
         const v = await vistasVentana(e.videoId, e.publicado);
         if (v === null) { if (++fallos >= 3) { console.warn('Analytics falla, se deja.'); break; } }
         else if (v > 0) ventana[e.videoId] = v;
-        else console.warn(`Sin datos para ${e.videoId} (${e.publicado.slice(0,10)})`);
+        else if (DIAG.length < 8) DIAG.push(`sin datos: ${e.videoId} ${e.publicado.slice(0,10)}`);
       }
       console.log(`Archivados ${Object.keys(ventana).length} episodios con ventana.`);
     }
@@ -278,7 +282,8 @@ async function youtube() {
       maximo: Math.max(...referencia, ultimo.vistas),
       episodios: episodios.length,
       comparados: referencia.length,
-      criterio
+      criterio,
+      diagnostico: DIAG.slice(0, 8)
     },
     comentarios
   };
