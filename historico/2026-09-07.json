@@ -1,7 +1,7 @@
 {
   "semana": {
     "etiqueta": "31 de agosto – 6 de septiembre de 2026",
-    "generado": "lunes, 7 sept, 13:50"
+    "generado": "lunes, 7 sept, 16:50"
   },
   "instagram": {
     "cuenta": "xavierlopezvega",
@@ -64,19 +64,29 @@
       "videoId": "w8TXQAOjY9k",
       "titulo": "Experta en Licitaciones: Superó un cáncer y Hoy le Vende Millones al Estado (Montse Cruxens)",
       "publicado": "2026-09-03",
-      "vistas": 13690,
-      "likes": 47,
+      "vistas": 14032,
+      "likes": 48,
       "comentarios": 7,
       "duracion": "2h 28min",
       "dias": 4
     },
     "referencia": {
-      "media": 45600,
+      "media": 45623,
       "mediana": 48298,
-      "maximo": 80794,
+      "maximo": 80798,
       "episodios": 119,
       "comparados": 20,
-      "criterio": "vistas totales acumuladas (histórico aún sin construir)"
+      "criterio": "vistas totales acumuladas (histórico aún sin construir)",
+      "diagnostico": [
+        "token: ok",
+        "funciona con channel==MINE",
+        "sin datos: cYwH2F7VAeA 2026-08-27",
+        "sin datos: -Zeo8yfUnHg 2026-08-20",
+        "sin datos: Me4cfTTuBkw 2026-08-13",
+        "sin datos: dr4FXDKHuy4 2026-08-06",
+        "sin datos: XA7oDz3vBnM 2026-07-30",
+        "sin datos: EtczE_x3dcA 2026-07-23"
+      ]
     },
     "comentarios": [
       {
