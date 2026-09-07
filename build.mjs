@@ -1,6 +1,8 @@
 // build.mjs — genera data.json para el reporte semanal de Viralium
 // Se ejecuta solo cada lunes desde GitHub Actions. Node 20+, sin dependencias.
 
+import fs from 'node:fs/promises';
+
 const CONFIG = {
   cuentaInstagram: 'xavierlopezvega',
   canalYouTube: 'Cuéntanos Tu Éxito',
@@ -8,6 +10,7 @@ const CONFIG = {
   duracionMinimaMin: 20,      // por debajo de esto no es episodio, es clip
   episodiosReferencia: 20,    // cuántos episodios pasados entran en la mediana
   diasVentana: 4,             // jueves a domingo: los días que se comparan de cada episodio
+  archivoVentana: 'ventana-episodios.json', // histórico propio: se rellena solo y ya no caduca
   comentariosMostrados: 8,
   zona: 'Europe/Madrid'
 };
@@ -181,23 +184,40 @@ async function youtube() {
 
   const ultimo = episodios[0];
   const previos = episodios.slice(1, 1 + CONFIG.episodiosReferencia);
+  const dias = Math.max(1, Math.round((Date.now() - new Date(ultimo.publicado)) / 864e5));
 
-  // El episodio nuevo lleva publicado desde el jueves, así que sus vistas totales
-  // SON las de la ventana. De los antiguos hay que pedir solo sus primeros días.
-  accessToken = await autenticar();
-  let vistasPrevias, criterio;
-  if (accessToken) {
-    vistasPrevias = [];
-    for (const e of previos) {
-      const v = await vistasVentana(e.videoId, e.publicado);
-      if (v !== null && v > 0) vistasPrevias.push(v);
+  // Histórico propio de vistas por ventana. Una vez guardado, ya no depende de Google.
+  let ventana = {};
+  try { ventana = JSON.parse(await fs.readFile(CONFIG.archivoVentana, 'utf8')); } catch {}
+  const guardadosAlEmpezar = Object.keys(ventana).length;
+
+  // El episodio de esta semana se mide solo: lleva publicado desde el jueves,
+  // así que sus vistas totales SON las de la ventana. Se archiva para siempre.
+  if (dias <= CONFIG.diasVentana + 1) ventana[ultimo.videoId] = ultimo.vistas;
+
+  // De los antiguos, solo se piden a Analytics los que aún no estén archivados.
+  const faltan = previos.filter(e => ventana[e.videoId] === undefined);
+  if (faltan.length) {
+    accessToken = await autenticar();
+    if (accessToken) {
+      console.log(`Rellenando ${faltan.length} episodios desde Analytics…`);
+      for (const e of faltan) {
+        const v = await vistasVentana(e.videoId, e.publicado);
+        if (v !== null && v > 0) ventana[e.videoId] = v;
+      }
     }
-    criterio = `primeros ${CONFIG.diasVentana} días de cada episodio`;
   }
-  if (!vistasPrevias || vistasPrevias.length < 3) {
-    vistasPrevias = previos.map(e => e.vistas);
-    criterio = 'vistas totales acumuladas (sin acceso a Analytics)';
+
+  if (Object.keys(ventana).length !== guardadosAlEmpezar) {
+    await fs.writeFile(CONFIG.archivoVentana, JSON.stringify(ventana, null, 2));
   }
+
+  const vistasPrevias = previos.map(e => ventana[e.videoId]).filter(v => v > 0);
+  const porVentana = vistasPrevias.length >= 3;
+  const referencia = porVentana ? vistasPrevias : previos.map(e => e.vistas);
+  const criterio = porVentana
+    ? `los primeros ${CONFIG.diasVentana} días de cada episodio`
+    : 'vistas totales acumuladas (histórico aún sin construir)';
 
   // 4. comentarios con texto
   let comentarios = [];
@@ -217,8 +237,6 @@ async function youtube() {
     });
   } catch { /* comentarios cerrados: el panel se oculta solo */ }
 
-  const dias = Math.max(1, Math.round((Date.now() - new Date(ultimo.publicado)) / 864e5));
-
   return {
     canal: CONFIG.canalYouTube,
     episodio: {
@@ -228,11 +246,11 @@ async function youtube() {
       duracion: ultimo.texto, dias
     },
     referencia: {
-      media: Math.round(vistasPrevias.reduce((a, b) => a + b, 0) / vistasPrevias.length),
-      mediana: mediana(vistasPrevias),
-      maximo: Math.max(...vistasPrevias, ultimo.vistas),
+      media: Math.round(referencia.reduce((a, b) => a + b, 0) / referencia.length),
+      mediana: mediana(referencia),
+      maximo: Math.max(...referencia, ultimo.vistas),
       episodios: episodios.length,
-      comparados: vistasPrevias.length,
+      comparados: referencia.length,
       criterio
     },
     comentarios
@@ -257,5 +275,6 @@ const data = {
   youtube: await youtube()
 };
 
-await (await import('node:fs/promises')).writeFile('data.json', JSON.stringify(data, null, 2));
+await fs.writeFile('data.json', JSON.stringify(data, null, 2));
 console.log(`OK · ${data.instagram.reels.length} reels · episodio "${data.youtube.episodio.titulo}"`);
+console.log(`Comparado contra ${data.youtube.referencia.comparados} episodios por ${data.youtube.referencia.criterio}`);
